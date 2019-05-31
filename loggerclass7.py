@@ -12,14 +12,6 @@ class logclass(logging.Logger):
         self.sevinfo = None
         self.mydict = {'siteId': self.siteId, 'stationId': self.stationId, 'Subsys': self.Subsys, 'systype': self.systype, 'sevinfo': self.sevinfo}
         return super(logclass, self).__init__(name)
-    '''   
-    if systype == "system":
-        Subsys = "SystemApp"
-    elif systype == "portal":
-        Subsys = "RestAPI"
-    elif systype == "stationController":
-        Subsys = "MsgBroker"
-    '''
 
     def info(self, msg, *args, **kwargs):
         extra_dict = kwargs.pop('extra', {} )
@@ -43,7 +35,7 @@ class logclass(logging.Logger):
     def warn(self, msg, *args, **kwargs):
         extra_dict = kwargs.pop('extra', {} )
         extra_dict = self.mydict
-        extra_dict['sevinfo'] = "warnnn"
+        extra_dict['sevinfo'] = "warn"
         return super(logclass, self).warn(msg, extra=extra_dict, *args, **kwargs)
 
 class myFormatter(logging.Formatter):
@@ -57,21 +49,15 @@ class myFormatter(logging.Formatter):
         return super().format(record)
 
 def main(argv):
-    #logging.setLoggerClass(logclass)
     logger = logclass("pls work") #works
-    #logger = logging.getLogger('pls workkk2') #also workss
-    #logger = logging.getLogger() #doesnt workkkk
     logger.setLevel(logging.DEBUG)
     handler = logging.handlers.SysLogHandler('/dev/log')
     handler.setLevel(logging.DEBUG)
     logger.addHandler(handler)
-    #FORMAT = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[severity= " %(levelname)s " siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s" sevinfo="%(sevinfo)s"] %(message)s'
-    #handler.setFormatter(logging.Formatter(FORMAT))
+
     fmt = myFormatter()
     handler.setFormatter(fmt)
     
-
-    #print(type(logger))
     logger.debug('---DEBUG LOG (1)')
     logger.warn('------WARN LOG (2)')
     logger.error('---------ERROR LOG (3)')
@@ -79,7 +65,6 @@ def main(argv):
     return 0
 
 if __name__ == "__main__":
-    #main(sys.argv)
     sys.exit(main(sys.argv))
 
 
