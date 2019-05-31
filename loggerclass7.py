@@ -41,7 +41,7 @@ class logclass(logging.Logger):
 class myFormatter(logging.Formatter):
     logfmt = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[level="%(levelname)s" siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s", sevinfo="%(sevinfo)s"] %(message)s'
     def __init__(self, *args, **kwargs):
-        super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=None, style='%')
+        super().__init__()
 
     def format(self, record):
         format_orig = self._style._fmt
