@@ -1,8 +1,6 @@
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import SysLogHandler
 import sys
-import os
-import syslog
 from pprint import pprint
 
 class logclass(logging.Logger):
@@ -49,7 +47,7 @@ class logclass(logging.Logger):
         return super(logclass, self).warn(msg, extra=extra_dict, *args, **kwargs)
 
 class myFormatter(logging.Formatter):
-    logfmt = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[level= " %(levelname)s siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s", sevinfo= "%(sevinfo)s"] %(message)s'
+    logfmt = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[level="%(levelname)s" siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s", sevinfo="%(sevinfo)s"] %(message)s'
     def __init__(self, *args, **kwargs):
         super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=None, style='%')
 
@@ -59,9 +57,10 @@ class myFormatter(logging.Formatter):
         return super().format(record)
 
 def main(argv):
-    logging.setLoggerClass(logclass)
-    #logger = logclass("pls work") 
-    logger = logging.getLogger('pls workkk2')
+    #logging.setLoggerClass(logclass)
+    logger = logclass("pls work") #works
+    #logger = logging.getLogger('pls workkk2') #also workss
+    #logger = logging.getLogger() #doesnt workkkk
     logger.setLevel(logging.DEBUG)
     handler = logging.handlers.SysLogHandler('/dev/log')
     handler.setLevel(logging.DEBUG)
