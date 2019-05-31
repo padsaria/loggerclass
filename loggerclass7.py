@@ -6,34 +6,22 @@ import syslog
 from pprint import pprint
 
 class logclass(logging.Logger):
-    global siteId 
-    global stationId 
-    global systype 
-    global Subsys
-    siteId = "  "
-    stationId = "  "
-    systype = "  "
-    Subsys = "   " 
-    global sevinfo
-    global logfmt
-    sevinfo = "   "
-    global mydict
-
     def __init__(self, name="testin1"):
-        self.siteId = 1
-        self.stationId = 2
-        self.systype = 3
-        self.Subsys = 4
+        self.siteId = "1"
+        self.stationId = "1"
+        self.Subsys = "RestAPI"
+        self.systype= "StationController"
         self.sevinfo = None
         self.mydict = {'siteId': self.siteId, 'stationId': self.stationId, 'Subsys': self.Subsys, 'systype': self.systype, 'sevinfo': self.sevinfo}
         return super(logclass, self).__init__(name)
-
+    '''   
     if systype == "system":
         Subsys = "SystemApp"
     elif systype == "portal":
         Subsys = "RestAPI"
     elif systype == "stationController":
         Subsys = "MsgBroker"
+    '''
 
     def info(self, msg, *args, **kwargs):
         extra_dict = kwargs.pop('extra', {} )
@@ -66,32 +54,29 @@ class myFormatter(logging.Formatter):
         super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=None, style='%')
 
     def format(self, record):
-        print("in myFormatter")
         format_orig = self._style._fmt
         self._style._fmt = myFormatter.logfmt
         return super().format(record)
 
 def main(argv):
     logging.setLoggerClass(logclass)
+    #logger = logclass("pls work") 
     logger = logging.getLogger('pls workkk2')
     logger.setLevel(logging.DEBUG)
     handler = logging.handlers.SysLogHandler('/dev/log')
     handler.setLevel(logging.DEBUG)
     logger.addHandler(handler)
-    FORMAT = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[severity= " %(levelname)s " siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s" sevinfo="%(sevinfo)s"] %(message)s'
-    handler.setFormatter(logging.Formatter(FORMAT))
+    #FORMAT = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[severity= " %(levelname)s " siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s" sevinfo="%(sevinfo)s"] %(message)s'
+    #handler.setFormatter(logging.Formatter(FORMAT))
     fmt = myFormatter()
     handler.setFormatter(fmt)
-    #logger = logclass("pls work")   
-    #logger.configure_logging()
+    
 
     #print(type(logger))
-   #mydict = logger.metadata()
-
-    logger.debug('2nd warning')
-    logger.warn('1st warning')
-    logger.error('1st warning')
-    logger.info("3rd INFO ?????")
+    logger.debug('---DEBUG LOG (1)')
+    logger.warn('------WARN LOG (2)')
+    logger.error('---------ERROR LOG (3)')
+    logger.info('------------INFO LOG (4)')
     return 0
 
 if __name__ == "__main__":
