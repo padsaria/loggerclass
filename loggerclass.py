@@ -1,94 +1,136 @@
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import SysLogHandler
 import sys
-import os
-import syslog
 from pprint import pprint
 
 class logclass(logging.Logger):
-    siteId = "  "
-    stationId = "  "
-    systype = "  "
-    Subsys = "   " 
-    global sevinfo
-    global logfmt
-    sevinfo = "   "
-
-    def __init__(self, name="testin"):
-        self.siteId = 1
-        self.stationId = 2
-        self.systype = 3
-        self.Subsys = 4
-        print("in here")
-
+    def __init__(self, name):
+        self.siteId = "1"
+        self.stationId = "1"
+        self.Subsys = "RestAPI"
+        self.systype= "StationController"
+        self.sevinfo = None
+        self.mydict = {'siteId': self.siteId, 'stationId': self.stationId, 'Subsys': self.Subsys, 'systype': self.systype, 'sevinfo': self.sevinfo}
         return super(logclass, self).__init__(name)
-
-    if systype == "system":
-        Subsys = "SystemApp"
-    elif systype == "portal":
-        Subsys = "RestAPI"
-    elif systype == "stationController":
-        Subsys = "MsgBroker"
     
-    def metadata(self):
-        mydict = {'siteId': self.siteId, 'stationId': self.stationId, 'Subsys': self.Subsys, 'systype': self.systype, 'sevinfo': sevinfo}
-        return mydict
+    logging.CRIT = 2
+    logging.crit = lambda x: logging.log(logging.crit, x) 
+    logging.addLevelName(logging.CRIT, "CRIT") 
     
-    def info(self, msg, extra):
-        #extra_dict = kwargs.pop('extra')
-        extra_dict['sevinfo'] = "dbg"
-        print("we got here boiiiii")
-        pprint(extra_dict)
-        super().info(msg, extra=extra_dict)
+    logging.WARNING = 4
+    logging.warning = lambda x: logging.log(logging.WARNING, x) 
+    logging.addLevelName(logging.WARNING, "WARNING") 
 
-    def error(self, msg, extra=None):
-        self.logger.error(msg, extra=extra)
+    logging.WARN = 4
+    logging.warn = lambda x: logging.log(logging.WARN, x) 
+    logging.addLevelName(logging.WARN, "WARN") 
+    
+    logging.NOTICE = 5
+    logging.notice = lambda x: logging.log(logging.NOTICE, x)
+    logging.addLevelName(logging.NOTICE, "NOTICE") 
 
-    def debug(self, msg, extra=None):
-        msg, kwargs = self.process(msg, kwargs)
-        self.logger.debug(msg, extra=extra)
+    logging.INFO = 6
+    logging.info = lambda x: logging.log(logging.INFO, x)
+    logging.addLevelName(logging.INFO, "INFO") 
+    
+    logging.DEBUG = 7
+    logging.debug = lambda x: logging.log(logging.DEBUG, x)
+    logging.addLevelName(logging.DEBUG, "DEBUG")
+    
+    def crit(self, msg, *args, **kwargs):
+        extra_dict = kwargs.pop('extra', {} )
+        if extra_dict == {}:
+            extra_dict = self.mydict
+        extra_dict['sevinfo'] = "maj"
+        sevnote = "Major Alarm"
+        self.log(logging.CRIT, msg, extra=extra_dict, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        extra_dict = kwargs.pop('extra', {} )
+        if extra_dict == {}:
+            extra_dict = self.mydict
+        extra_dict['sevinfo'] = "min"
+        sevnote = "Minor Alarm"
+        return super(logclass, self).warn(msg, extra=extra_dict, *args, **kwargs)
+    
+    def notice(self, msg, *args, **kwargs):
+        extra_dict = kwargs.pop('extra', {} )
+        if extra_dict == {}:
+            extra_dict = self.mydict
+        extra_dict['sevinfo'] = "clr"
+        sevnote = "Clear Alarm"
+        self.log(logging.NOTICE, msg, extra=extra_dict, *args, **kwargs)
+    
+    def info(self, msg, *args, **kwargs):
+        extra_dict = kwargs.pop('extra', {} )
+        if extra_dict == {}:
+            extra_dict = self.mydict
+        extra_dict['sevinfo'] = "info"
+        sevnote = "Information Log"
+        return super(logclass, self).info(msg, extra=extra_dict, *args, **kwargs)
     
     def debug(self, msg, *args, **kwargs):
         extra_dict = kwargs.pop('extra', {} )
-        extra_dict['siteId'] = self.siteId
-        extra_dict['stationId'] = self.stationId
-        extra_dict['Subsys'] = self.Subsys
-        extra_dict['systype'] = self.systype
-        extra_dict['sevinfo'] = "5"
-        print("we got here boiiiii")
-        pprint(extra_dict)
+        if extra_dict == {}:
+            extra_dict = self.mydict
+        extra_dict['sevinfo'] = "dbg"
+        sevnote = "Debug Log"
         return super(logclass, self).debug(msg, extra=extra_dict, *args, **kwargs)
 
-    def warn(self, msg, extra=None):
-        self.logger.warn(msg, extra=extra)
+    
+class myFormatter(logging.Formatter):
+    logfmt = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[level="%(levelname)s" siteId="%(siteId)s" stationId="%(stationId)s" Subsys="%(Subsys)s" systype="%(systype)s" sevinfo="%(sevinfo)s"] %(message)s'
+    def __init__(self, *args, **kwargs):
+        super().__init__()
 
-    def configure_logging(self):
-        self.setLevel(logging.DEBUG)
-        handler = logging.handlers.SysLogHandler('/dev/log')
-        handler.setLevel(logging.DEBUG)
-        self.addHandler(handler)
-        FORMAT = '<local0.2> %(asctime)-15s  station.viasat.io DeviceFactory[22222]:[severity= " %(levelname)s " siteId="%(siteId)s " stationId="%(stationId)s"  Subsys="%(Subsys)s" systype="%(systype)s" sevinfo="%(sevinfo)s"] %(message)s'
-        handler.setFormatter(logging.Formatter(FORMAT))
-        print("end of configure_logging")
-  
+    def format(self, record):
+        format_orig = self._style._fmt
+        self._style._fmt = myFormatter.logfmt
+        return super().format(record)
 
+class UpperThresholdFilter(logging.Filter):
+        def __init__(self, threshold, *args, **kwargs):
+            self._threshold = threshold
+            super(UpperThresholdFilter, self).__init__(*args, **kwargs)
 
-
-
+        def filter(self, rec):
+            return rec.levelno <= self._threshold
 
 def main(argv):
-    logging.setLoggerClass(logclass)
-    #logging.basicConfig()
-    logger = logging.getLogger("testin")
-    logger.configure_logging()
-    
-    print(type(logger))
-    print("here2")
-   #mydict = logger.metadata()
+    logger = logclass() #works
+    logger.setLevel(logging.CRIT)
+    handler = logging.handlers.SysLogHandler('/dev/log')
+    handler.setLevel(logging.CRIT)
+    handler.addFilter(UpperThresholdFilter(logging.DEBUG))
+    logger.addHandler(handler)
 
-    logger.debug('2nd warning')
+    fmt = myFormatter()
+    handler.setFormatter(fmt)
+    
+    logger.debug('---DEBUG LOG')
+    logger.warn('------WARN LOG')
+    logger.crit('---------CRIT LOG')
+    logger.info('------------INFO LOG')
+    logger.notice('---------------NOTICE LOG')
+
+    siteId = "2"
+    stationId = "2"
+    Subsys = "RestAPI__2"
+    systype= "StationController__2"
+    sevinfo = None
+    d = {'siteId': siteId, 'stationId': stationId, 'Subsys': Subsys, 'systype': systype, 'sevinfo': sevinfo }
+
+    logger.debug('---DEBUG LOG__2', extra=d)
+    logger.warn('------WARN LOG__2', extra=d)
+    logger.crit('---------CRIT LOG__2', extra=d)
+    logger.info('------------INFO LOG__2', extra=d)
+    logger.notice('---------------NOTICE LOG__2', extra=d)
+
+
+
     return 0
 
 if __name__ == "__main__":
-    #main(sys.argv)
     sys.exit(main(sys.argv))
+
+
